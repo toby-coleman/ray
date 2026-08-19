@@ -1,3 +1,6 @@
+.. meta::
+   :description: Aggregate Ray Data Datasets with built-in aggregations and custom aggregators, including a worked example building a custom mean aggregator.
+
 .. _aggregations:
 
 Aggregating Data
@@ -19,7 +22,7 @@ These can be used directly on a Dataset or a GroupedData object, as shown below:
 
     # Create a sample dataset
     ds = ray.data.range(100)
-    ds = ds.add_column("group_key", lambda x: x % 3)
+    ds = ds.add_column("group_key", lambda x: x["id"].to_numpy() % 3)
     # Schema: {'id': int64, 'group_key': int64}
 
     # Find the max
@@ -43,7 +46,7 @@ Aggregation objects can be used directly with a Dataset like shown below:
 
     # Create a sample dataset
     ds = ray.data.range(100)
-    ds = ds.add_column("group_key", lambda x: x % 3)
+    ds = ds.add_column("group_key", lambda x: x["id"].to_numpy() % 3)
 
     # Count all rows
     result = ds.aggregate(Count())
@@ -67,7 +70,7 @@ Multiple aggregations can also be computed at once:
     from ray.data.aggregate import Count, Mean, Min, Max, Std
 
     ds = ray.data.range(100)
-    ds = ds.add_column("group_key", lambda x: x % 3)
+    ds = ds.add_column("group_key", lambda x: x["id"].to_numpy() % 3)
 
     # Compute multiple aggregations at once
     result = ds.groupby("group_key").aggregate(
@@ -159,10 +162,10 @@ Here's an example of creating a custom aggregator that calculates the Mean of va
 
 
 .. note::
-    Internally, aggregations support both the :ref:`hash-shuffle backend <hash-shuffle>` and the :ref:`range based backend <range-partitioning-shuffle>`.
+    Internally, aggregations support both the :ref:`hash-shuffle backend <hash-shuffle>` and the :ref:`range based backend <range-partitioning-shuffle>`. Hash-shuffle (``ShuffleStrategy.HASH_SHUFFLE``) is the default.
 
     Hash-shuffling can provide better performance for aggregations in certain cases. For more information see `comparison between hash based shuffling and Range Based shuffling approach <https://www.anyscale.com/blog/ray-data-joins-hash-shuffle#performance-benchmarks/>`_ .
 
-    To use the hash-shuffle algorithm for aggregations, you need to set the shuffle strategy explicitly:    
-    ``ray.data.DataContext.get_current().shuffle_strategy = ShuffleStrategy.HASH_SHUFFLE`` before creating a ``Dataset``
+    A new shuffle strategy, :ref:`Shuffle v2 <shuffle-v2>` (``ShuffleStrategy.SHUFFLE_V2``), is currently in Alpha. To use it for aggregations, set the strategy before creating a ``Dataset``:
+    ``ray.data.DataContext.get_current().shuffle_strategy = ShuffleStrategy.SHUFFLE_V2``. See :ref:`Tuning shuffle v2 <tuning-shuffle-v2>` for the available knobs.
     
